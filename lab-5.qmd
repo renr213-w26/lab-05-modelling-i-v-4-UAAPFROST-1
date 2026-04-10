@@ -129,11 +129,29 @@ Let’s start by reading in the `parasites` data and examining the relationship 
 
 a.  Load the data and save the data frame as `parasites`.
 
+    ```{r}
+    parasites <- read.csv("data/parasites.csv")
+    ```
+
 b.  Based on the goals of the analysis, what is the response variable?
+
+    The response variable is parsim as the study is trying to look how the parasites vary between species pairs.
 
 c.  Visualize the relationship between the two variables.
 
+    ```{r}
+    ggplot(parasites, aes(x = divergence_time, y = parsim)) +
+      geom_point() +
+      labs(
+        title = "Species Evolutionary Divergence vs Parasite Similarity",
+        x = "Species Evolutionary Divergence (millions of years)",
+        y = "Parasite Similarity (shown as a proportion)"
+      )
+    ```
+
 d.  Use the visualization to describe the relationship between the two variables.
+
+    The variables have a negative relationship as seen in the graph. The parasite similarity proportion can be seen dropping as the species evolutionary divergence increases in time.
 
 ## Question 4
 
@@ -141,11 +159,35 @@ Next, model this relationship.
 
 a.  Fit the model and write the estimated regression equation.
 
+    ```{r}
+    model_parasites <- lm(parsim ~ divergence_time, data = parasites)
+    tidy(model_parasites)
+    ```
+
+    $$
+    parsim = 0.38 - 0.001(divergencetime)
+    $$
+
 b.  Interpret the slope and the intercept in the context of the data.
+
+    The slope represents the change in proportion of parasites shared corresponding with each added million years of divergence time. The intercept tells us that the two species will share roughly 38% of their parasites upon their initial divergence.
 
 c.  Recreate the visualization from Question 3, this time adding a regression line to the visualization.
 
+    ```{r}
+    ggplot(parasites, aes(x = divergence_time, y = parsim)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      labs(
+        title = "Species Evolutionary Divergence vs Parasite Similarity",
+        x = "Species Evolutionary Divergence (millions of years)",
+        y = "Parasite Similarity (shown as a proportion)"
+      )
+    ```
+
 d.  What do you notice about the prediction (regression) line that may be strange, particularly for very large divergence times?
+
+    The regression line shows negative parasite similarity values when going past 60 million years, which should not be possible as you cannot share a negative number of parasites.
 
 ## Question 5
 
@@ -155,11 +197,29 @@ a.  Using mutate, create a new variable `transformed_parsim` that is calculated 
 
     ::: callout-note
     `log()` in R represents the **nautral log**.
+
+    ```{r}
+    parasites <- parasites |>
+      mutate(transformed_parsim = log(parsim / (1 - parsim)))
+    ```
     :::
 
 b.  Then, visualize the relationship between divergence_time and `transformed_parsim`. Add a regression line to your visualization.
 
+    ```{r}
+    ggplot(parasites, aes(x = divergence_time, y = transformed_parsim)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      labs(
+        title = "Species Evolutionary Divergence vs Transformed Parasite Similarity",
+        x = "Species Evolutionary Divergence (millions of years)",
+        y = "Logarithmic Parasite Similarity (shown as a proportion)"
+      )
+    ```
+
 c.  Write a 1-2 sentence description of what you observe in the visualization.
+
+    The graph still shows a negative linear relationship between the two variables as we can see parasite similarity dropping as evolutionary divergence increases.
 
 ## Question 6
 
@@ -177,7 +237,32 @@ To answer this question, begin by fitting a linear regression model to each pair
 
 a.  Report the slopes for each of these models. Use proper notation.
 
+    ```{r}
+    dt_model <- lm(transformed_parsim ~ divergence_time, data = parasites)
+    dist_model <- lm(transformed_parsim ~ distance, data = parasites)
+    BM_model <- lm(transformed_parsim ~ BMdiff, data = parasites)
+    prec_model <- lm(transformed_parsim ~ precdiff, data = parasites)
+    ```
+
+    $$
+    \hat{β_{dt}} = -0.09
+    $$
+
+    $$
+    \hat{β_{dist}} = -0.00002
+    $$
+
+    $$
+    \hat{β_{BM}} = -5.04
+    $$
+
+    $$
+    \hat{β_{prec}} = -0.006
+    $$
+
 b.  To answer the question of interest, would it be useful to compare the slopes in each model to choose the variable that is the strongest predictor of parasite similarity? Why or why not?
+
+    All of the variables are either in different scales, units, or a combination of the 2, thus comparing them would not be useful.
 
 ## Question 7
 
@@ -189,7 +274,32 @@ You can calculate $R^2$ using the glance function. For example, you can calculat
 
 a.  Calculate and report $R^2$ for each model fit in the previous exercise.
 
+    ```{r}
+    glance(dt_model)$r.squared
+    glance(dist_model)$r.squared
+    glance(BM_model)$r.squared
+    glance(prec_model)$r.squared
+    ```
+
+    $$
+    R^2_{dt} = 0.51
+    $$
+
+    $$
+    R^2_{dist} = 0.44
+    $$
+
+    $$
+    R^2_{BM} = 0.003
+    $$
+
+    $$
+    R^2_{prec} = 0.009
+    $$
+
 b.  To answer our question of interest, would it be useful to compare the $R^2$ in each model to choose the variable that is the strongest predictor of parasite similarity? Why or why not?
+
+    It would be useful to compare the $R^2$ values in each model as they show how much variation in the parasite similarity is occurring due to each respective variable.
 
 # Part 3 - GDP and life expectancy
 
